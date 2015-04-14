@@ -5,22 +5,22 @@
  */
 package gcodejam
 
-import utils.{CodeJamMonadicApp, CodeJamApp}
+import scalaz.Scalaz._
+import scalaz.{Heap, _}
 
-import scala.collection.{mutable, SortedSet}
+object InfiniteHouseOfPancakes extends CodeJamApp[Int] {
 
-object InfiniteHouseOfPancakes extends CodeJamMonadicApp[Int] {
-  
-  def split(cakes: mutable.PriorityQueue[Int]) = {
-    val head = cakes.dequeue()
-    cakes += (head / 2) += ((head + 1) / 2)
+  implicit val maxOrder:Order[Int] = Order[Int].reverseOrder
+  def split(cakes: Heap[Int]) = {
+    val Some((head, rest)) = cakes.uncons
+    rest.insert (head / 2)(maxOrder).insert((head + 1) / 2)(maxOrder)
   }
   
-  def solutions(cakes: mutable.PriorityQueue[Int], steps: Int): Stream[Int] = (cakes.head + steps) #::
-    (if (cakes.head <= 3) Stream.empty else solutions(split(cakes), steps + 1))
+  def solutions(cakes: Heap[Int], steps: Int): Stream[Int] = (cakes.minimum + steps) #::
+    (if (cakes.minimum <= 3) Stream.empty else solutions(split(cakes), steps + 1))
   
-  val solution = for(_ <- getLine; line <- getLine) yield {
-    val cakes = mutable.PriorityQueue(line split " " map (_.toInt): _*)
+  val solution = for (_ <- getLine; line <- getLine) yield {
+    val cakes = Heap.fromData[List, Int](line split " " map (_.toInt) toList)(maxOrder)
     solutions(cakes, 0).min
   }
 }

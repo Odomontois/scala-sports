@@ -3,7 +3,7 @@
  * Date  : 14-Apr-15
  * Time  : 23:36
  */
-package utils
+package gcodejam
 
 import java.nio.file.{Files, Paths}
 
@@ -13,7 +13,7 @@ import scalaz.Scalaz._
 import scalaz._
 
 
-trait CodeJamMonadicApp[T] {
+trait CodeJamApp[T] {
   val input: Array[String] => String = args => f"codejam/${args(0)}.in"
   val output: Array[String] => String = args => f"codejam/${args(0)}.out"
   

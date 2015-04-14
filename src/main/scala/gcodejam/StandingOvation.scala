@@ -5,9 +5,9 @@
  */
 package gcodejam
 
-import utils.CodeJamMonadicApp
+import gcodejam.CodeJamApp
 
-object StandingOvation extends CodeJamMonadicApp[Int] {
+object StandingOvation extends CodeJamApp[Int] {
   def friends(standing: Int, aggr: Int, auds: Seq[Int], level: Int): Int =
     if (auds.isEmpty) aggr
     else {
