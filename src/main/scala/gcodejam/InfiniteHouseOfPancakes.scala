@@ -5,22 +5,24 @@
  */
 package gcodejam
 
-import scalaz.Scalaz._
+import scala.language.{postfixOps, implicitConversions}
 import scalaz.{Heap, _}
+import Scalaz.listInstance
 
 object InfiniteHouseOfPancakes extends CodeJamApp[Int] {
+  implicit val reversedOrder: Order[Int] = Scalaz.intInstance.reverseOrder
 
-  implicit val maxOrder:Order[Int] = Order[Int].reverseOrder
   def split(cakes: Heap[Int]) = {
     val Some((head, rest)) = cakes.uncons
-    rest.insert (head / 2)(maxOrder).insert((head + 1) / 2)(maxOrder)
+    rest + head / 2 + (head + 1) / 2
   }
+
+  def timings(steps: Int = 0)(cakes: Heap[Int]): Stream[Int] = (cakes.minimum + steps) #::
+    (if (cakes.minimum <= 3) Stream.Empty else timings(steps + 1)(split(cakes)))
+
+  val parse: Solution[List[Int]] = for(_ <- getLine; line <- getLine) yield line split " " map (_.toInt) toList
   
-  def solutions(cakes: Heap[Int], steps: Int): Stream[Int] = (cakes.minimum + steps) #::
-    (if (cakes.minimum <= 3) Stream.empty else solutions(split(cakes), steps + 1))
-  
-  val solution = for (_ <- getLine; line <- getLine) yield {
-    val cakes = Heap.fromData[List, Int](line split " " map (_.toInt) toList)(maxOrder)
-    solutions(cakes, 0).min
-  }
+  val result = Heap.fromData[List,Int] _ andThen timings() andThen (_.min)
+
+  val solution = parse map result
 }
