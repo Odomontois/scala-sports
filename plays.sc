@@ -1,26 +1,25 @@
-class Vector(val elements: Array[Double]) {
-  def +(other: Vector) = ???
+import scala.language.higherKinds
 
-  def /(d: Double) = ???
+trait Record[This <: Record[This]] {
+  self =>
+  val data: String
+}
+case class ExampleRecord(data : String) extends Record[ExampleRecord]
 
-  def +=(o: Vector) = ???
+trait Store[This <: Store[This, RecordType], RecordType <: Record[RecordType]] {
+  self: This =>
+  val content: RecordType
+  def database: DatabaseService[Store, Record]  // What is the correct type?
+  def queryBuilder: QueryService[This, Record] // What is the correct type?
+}
+trait DatabaseService[StoreKind[St <: StoreKind[St, RecordKind[Rec]], Rec <: RecordKind[Rec]], RecordKind[Rec <: RecordKind[Rec]]]
 
-  def apply(i: Int): Double = ???
+trait QueryService[StoreKind[St <: Record[St]], RecordKind[Rec <: Record[Rec]]]
+
+case class MyStore[RecordType <: Record[RecordType]](content: RecordType) extends Store[MyStore[RecordType], RecordType] {
+  def database = MyStore
+  def queryBuilder = MyQueryBuilder
 }
 
-def average(ps: Iterable[Vector]): Vector = {
-  val numVectors = ps.size
-  var out = new Vector(ps.head.elements)
-  ps foreach (out += _)
-  out / numVectors
-}
-
-def average2(ps: Iterable[Vector]): Vector = {
-  val numVectors = ps.size
-
-  val vSize = ps.head.elements.length
-
-  def element(index: Int): Double = ps.map(_(index)).sum / numVectors
-
-  new Vector(0 until vSize map element toArray)
-}
+object MyStore extends DatabaseService[Store, Record]
+object MyQueryBuilder extends QueryService[MyStore,Record]
