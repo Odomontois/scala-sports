@@ -26,6 +26,6 @@ object Convert extends App {
   } yield {
       (handleBools, bools).zipped map (_(_))
       (handleInts, ints).zipped map (_(_))
-    }) map(_ => Ok()) recover { case ex => Badrequest(ex.getMessage) } get
+    }) map(_ => Ok()) recover { case ex => BadRequest(ex.getMessage) } get
 
 }
