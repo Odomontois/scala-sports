@@ -1,25 +1,8 @@
-import scala.language.higherKinds
-
-trait Record[This <: Record[This]] {
-  self =>
-  val data: String
+import scala.util.{Failure, Success, Try}
+implicit class LogTry[T](attempt: Try[T]) {
+  def log[E](comp: T => E, block: String => String, error: Throwable => String = _ => "(not available)") =
+    println(block(attempt map (comp andThen (_.toString)) recover { case ex => error(ex) } get))
 }
-case class ExampleRecord(data : String) extends Record[ExampleRecord]
-
-trait Store[This <: Store[This, RecordType], RecordType <: Record[RecordType]] {
-  self: This =>
-  val content: RecordType
-  def database: DatabaseService[Store, Record]  // What is the correct type?
-  def queryBuilder: QueryService[This, Record] // What is the correct type?
-}
-trait DatabaseService[StoreKind[St <: StoreKind[St, RecordKind[Rec]], Rec <: RecordKind[Rec]], RecordKind[Rec <: RecordKind[Rec]]]
-
-trait QueryService[StoreKind[St <: Record[St]], RecordKind[Rec <: Record[Rec]]]
-
-case class MyStore[RecordType <: Record[RecordType]](content: RecordType) extends Store[MyStore[RecordType], RecordType] {
-  def database = MyStore
-  def queryBuilder = MyQueryBuilder
-}
-
-object MyStore extends DatabaseService[Store, Record]
-object MyQueryBuilder extends QueryService[MyStore,Record]
+val size: Try[(Int, Int)] = Success((1, 2))
+size.log(_._2, size => f"size is $size kb")
+Failure[(Int, Int)](new RuntimeException).log(_._2, size => f"size is $size kb", err => f"(not available because $err)")
