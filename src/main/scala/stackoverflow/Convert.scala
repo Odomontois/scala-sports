@@ -9,6 +9,9 @@ import scala.collection.generic.CanBuildFrom
 import scala.util.{Success, Try}
 
 object Convert extends App {
+  trait Result
+  case class Ok(mess: String = "ok") extends Result
+  case class BadRequest(mess: String = "bad") extends Result
   def convert[T](x: Option[String], f: String => T) = x map (v => Try(Some(f(v)))) getOrElse Success(None)
   def sequence[T](xs: Seq[Try[T]]): Try[Seq[T]] = (Try(Vector[T]()) /: xs) { (tseq, tx) => for {
     seq <- tseq
@@ -26,6 +29,6 @@ object Convert extends App {
   } yield {
       (handleBools, bools).zipped map (_(_))
       (handleInts, ints).zipped map (_(_))
-    }) map(_ => Ok()) recover { case ex => BadRequest(ex.getMessage) } get
+    }) map (_ => Ok()) recover { case ex => BadRequest(ex.getMessage) } get
 
 }
