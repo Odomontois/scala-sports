@@ -10,10 +10,11 @@ import scala.collection.immutable.ListMap
 import xml.XML
 import java.net.URLEncoder
 
-object Places {
-  val mems = xml.XML.load("https://ru.wikivoyage.org/wiki/%D0%9F%D1%80%D0%B8%D1%80%D0%BE%D0%B4%D0%BD%D1%8B%D0%B5_%D0%BF%D0%B0%D0%BC%D1%8F%D1%82%D0%BD%D0%B8%D0%BA%D0%B8_%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D0%B8/%D0%9C%D0%BE%D1%81%D0%BA%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C")
+trait Places{
+  def url:String
+  val mems = xml.XML.load(url)
   val names = mems.descendant flatMap {
-    case n if n.label == "span" && (n \ "@class").text == "mw-headline" => Seq(Left(n.text))
+    case n if n.label == "sobjpan" && (n \ "@class").text == "mw-headline" => Seq(Left(n.text))
     case n if n.label == "table" => n \\ "td" \\ "span" \\ "b" map (n => Right(n.text))
     case _ => Seq()
   }
@@ -26,7 +27,7 @@ object Places {
       case Left(header) => (header, Vector(), acc :+ current -> coll)
     }
   }
-
+  
   val gr = ListMap(grouped: _*)
   val json = grouped.map {
     case (header, items) => f""" "$header":[\n\t\t"${
@@ -34,16 +35,15 @@ object Places {
     }"]"""
   } mkString("{\n\t", ",\n\t", "}")
 
+  val postfix = ""
+
   //  Files.write(Paths.get("phout.json"), json.getBytes(UTF_8))
   def write(file: String, string: String) = Files.write(Paths.get(file), string.getBytes(UTF_8))
-
-  val oblast = ",%D0%9C%D0%BE%D1%81%D0%BA%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F+%D0%9E%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C"
-
   def getPoint(name: String = "", url: Boolean = false) = {
     val theUrl = if (url) name
     else {
       val nmenc = name split ' ' map (URLEncoder.encode(_, "utf-8")) mkString "+"
-      f"http://geocode-maps.yandex.ru/1.x/?geocode=$nmenc$oblast&results=1"
+      f"http://geocode-maps.yandex.ru/1.x/?geocode=$nmenc$postfix&results=1"
     }
     val xml = XML.load(theUrl)
     def parsePair(pair: String) = pair.split(' ') map (_.toDouble) match {
@@ -74,6 +74,25 @@ object Places {
 
   def distStr(name: String) = distTo(name) getOrElse "???"
 
+
+}
+
+object Moscow   extends Places{
+  def url = "https://ru.wikivoyage.org/wiki/%D0%9F%D1%80%D0%B8%D1%80%D0%BE%D0%B4%D0%BD%D1%8B%D0%B5_%D0%BF%D0%B0%D0%BC%D1%8F%D1%82%D0%BD%D0%B8%D0%BA%D0%B8_%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D0%B8/%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0"
+  override val postfix = ",%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0"
+  def printObj(obj: String) =
+    f"""
+       |\tобъект: $obj
+        |\tудалённость: ${distStr(obj)}
+     """.stripMargin
+  def objects = grouped(0)._2 sortBy (distTo(_)) map printObj mkString ("\n" + "-" * 30 + "\n")
+}
+
+object MoscowOblast extends Places{
+  def url = "https://ru.wikivoyage.org/wiki/%D0%9F%D1%80%D0%B8%D1%80%D0%BE%D0%B4%D0%BD%D1%8B%D0%B5_%D0%BF%D0%B0%D0%BC%D1%8F%D1%82%D0%BD%D0%B8%D0%BA%D0%B8_%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D0%B8/%D0%9C%D0%BE%D1%81%D0%BA%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C"
+  override val postfix = ",%D0%9C%D0%BE%D1%81%D0%BA%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F+%D0%9E%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C"
+
+
   def printObj(obj: String) =
     f"""
        |\tобъект: $obj
@@ -90,3 +109,4 @@ object Places {
 
   def places = grouped sortBy { case (name, _) => distTo(name) } map (printPlace _).tupled mkString ("\n" + "-" * 30 + "\n")
 }
+
