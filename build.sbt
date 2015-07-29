@@ -4,7 +4,7 @@ resolvers += Resolver.sonatypeRepo("releases")
 
 fork in run := true
 
-baseDirectory in run := baseDirectory.value / "working"
+//baseDirectory in run := baseDirectory.value / "working"
 
 libraryDependencies ++= Seq(
   "com.chuusai" %% "shapeless" % "2.2.3",

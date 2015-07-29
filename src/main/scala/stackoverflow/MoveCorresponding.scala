@@ -52,7 +52,7 @@ object MoveCorresponding {
     }
   }
   def main(args: Array[String]) {
-    val file = getClass.getResource("employees.txt").getFile
+    val file = getClass.getResource("employees.csv").getFile
 
     val employees: ValidationNel[Throwable, Seq[Employee]] =
       CSVReader[Employee]
