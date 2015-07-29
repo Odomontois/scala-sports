@@ -15,23 +15,28 @@ implicit def hConsEv[E: TypeTag, T <: HList](implicit tailEv: HListEv[T, E]): HC
 
 def elem[L <: HList, E: TypeTag](list: L)(implicit ev: HListEv[L, E]) = ev
 
-trait Ternary
-trait TernaryNonZero extends Ternary
-case object One extends TernaryNonZero
-case object Two extends TernaryNonZero
-case object Zero extends Ternary
-
-object sum extends Poly2 {
-  implicit def atZeroes = at[Zero.type, Zero.type]((_, _) => Zero)
-  implicit def atLeftZero[T <: TernaryNonZero] = at[T, Zero.type]((x, _) => x)
-  implicit def atRightZero[T <: TernaryNonZero] = at[Zero.type, T]((_, x) => x)
-  implicit def atOneTwo = at[One.type, Two.type]((_, _) => Zero)
-  implicit def atTwoOne = at[Two.type, One.type]((_, _) => Zero)
-  implicit def atOneOne = at[One.type, One.type]((_, _) => Two)
-  implicit def atTwoTwo = at[Two.type, Two.type]((_, _) => One)
+sealed trait Ternary {
+  type S <: Ternary
+  def next(implicit s: S) = s
 }
+sealed trait One extends Ternary {
+  type S = Two
+}
+implicit object One extends One
+sealed trait Two extends Ternary {
+  type S = Zero
+}
+implicit object Two extends Two
+sealed trait Zero extends Ternary {
+  type S = One
+}
+implicit object Zero extends Zero
+object sum extends Poly2 {
+  implicit def atNumeric[N: Numeric] = at[Int, N]((acc, _) => acc + 1)
+  implicit def atString = at[Int, String]((acc, _) => acc)
+ }
 
-(One :: Two :: Two :: One :: HNil).foldLeft(Zero)(sum)
+(1 :: 2.0 :: "lolo" :: BigInt(3) :: HNil).foldLeft(0)(sum)
 
 
 
