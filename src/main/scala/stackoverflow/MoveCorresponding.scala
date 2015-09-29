@@ -56,7 +56,7 @@ object MoveCorresponding {
 
     val employees: ValidationNel[Throwable, Seq[Employee]] =
       CSVReader[Employee]
-        .readCSVFromFileName(file)
+        .readCSVFromFileName(file, skipHeader = true)
         .traverseU(_.toValidation)
     //
     val averageSalary = (_: Seq[Employee])
@@ -65,7 +65,6 @@ object MoveCorresponding {
       .map(emp => BigDecimal(emp.salary))
       .qmean
     }
-    employees foreach
-      (averageSalary andThen (_ foreach println))
+    println(employees map averageSalary)
   }
 }
